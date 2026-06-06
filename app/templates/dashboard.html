@@ -3,60 +3,97 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Superset Auto-Remediation · Devin Pipeline</title>
+  <title>Superset Security Auto-Remediation · Devin Pipeline</title>
   <meta http-equiv="refresh" content="10" />
   <style>
+    /* GitHub Primer-inspired light theme. */
     :root {
-      --bg:#0b0f17; --panel:#141a26; --panel2:#1b2333; --line:#26304a;
-      --txt:#e6ebf5; --muted:#8a97b2; --accent:#5b8cff; --green:#36d399;
-      --amber:#fbbd23; --red:#f87272; --purple:#a78bfa;
+      --canvas:#ffffff; --canvas-subtle:#f6f8fa; --canvas-inset:#eaeef2;
+      --border:#d0d7de; --border-muted:#d8dee4;
+      --fg:#1f2328; --muted:#656d76;
+      --accent:#0969da; --accent-soft:#ddf4ff;
+      --green:#1a7f37; --green-emphasis:#1f883d; --green-soft:#dafbe1;
+      --amber:#9a6700; --amber-soft:#fff8c5;
+      --red:#cf222e; --red-soft:#ffebe9;
+      --purple:#8250df; --purple-soft:#fbefff;
+      --shadow:0 1px 0 rgba(31,35,40,.04), 0 1px 3px rgba(31,35,40,.06);
     }
     * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--txt);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-    .wrap { max-width:1180px; margin:0 auto; padding:28px 24px 64px; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:16px;
-      flex-wrap:wrap; margin-bottom:8px; }
-    h1 { font-size:20px; margin:0; letter-spacing:.2px; }
+    body { margin:0; background:var(--canvas-subtle); color:var(--fg);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      font-size:14px; line-height:1.5; }
+    .wrap { max-width:1180px; margin:0 auto; padding:24px 24px 64px; }
+    header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+      flex-wrap:wrap; padding-bottom:16px; margin-bottom:20px; border-bottom:1px solid var(--border); }
+    h1 { font-size:20px; margin:0; font-weight:600; letter-spacing:-.2px; }
     h1 span { color:var(--accent); }
-    .sub { color:var(--muted); font-size:13px; margin:2px 0 24px; }
-    .badge { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); }
-    .badge.live { color:var(--green); border-color:#1f5f49; background:#0e2620; }
-    .badge.placeholder { color:var(--amber); border-color:#5e4a14; background:#241d0c; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-      gap:14px; margin-bottom:26px; }
-    .kpi { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
-    .kpi .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
-    .kpi .value { font-size:30px; font-weight:650; margin-top:6px; }
-    .kpi .value.green{color:var(--green);} .kpi .value.amber{color:var(--amber);}
+    .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+    .sub code { background:var(--canvas-inset); padding:1px 6px; border-radius:6px; font-size:12px; }
+    .badge { font-size:12px; font-weight:600; padding:5px 11px; border-radius:999px;
+      border:1px solid var(--border); background:var(--canvas); white-space:nowrap; }
+    .badge.live { color:var(--green-emphasis); border-color:#1f883d33; background:var(--green-soft); }
+    .badge.placeholder { color:var(--amber); border-color:#9a670033; background:var(--amber-soft); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+      gap:14px; margin-bottom:24px; }
+    .kpi { background:var(--canvas); border:1px solid var(--border); border-radius:12px;
+      padding:16px 18px; box-shadow:var(--shadow); }
+    .kpi .label { font-size:12px; color:var(--muted); text-transform:uppercase;
+      letter-spacing:.4px; font-weight:600; }
+    .kpi .value { font-size:30px; font-weight:600; margin-top:6px; letter-spacing:-.5px; }
+    .kpi .value.green{color:var(--green-emphasis);} .kpi .value.amber{color:var(--amber);}
     .kpi .value.red{color:var(--red);} .kpi .value.blue{color:var(--accent);}
     .kpi .value.purple{color:var(--purple);}
     .kpi .foot { font-size:11px; color:var(--muted); margin-top:4px; }
-    table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:14px;
-      overflow:hidden; border:1px solid var(--line); }
-    th,td { text-align:left; padding:11px 14px; font-size:13px; border-bottom:1px solid var(--line); }
-    th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:.5px; }
+    .card { background:var(--canvas); border:1px solid var(--border); border-radius:12px;
+      overflow:hidden; box-shadow:var(--shadow); }
+    .card-head { padding:12px 16px; border-bottom:1px solid var(--border);
+      font-weight:600; font-size:13px; background:var(--canvas-subtle); }
+    table { width:100%; border-collapse:collapse; }
+    th,td { text-align:left; padding:11px 16px; font-size:13px;
+      border-bottom:1px solid var(--border-muted); vertical-align:top; }
+    th { color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px;
+      letter-spacing:.4px; background:var(--canvas-subtle); }
     tr:last-child td { border-bottom:none; }
-    tr:hover td { background:var(--panel2); }
-    a { color:var(--accent); text-decoration:none; }
+    tbody tr:hover td { background:var(--canvas-subtle); }
+    a { color:var(--accent); text-decoration:none; font-weight:500; }
     a:hover { text-decoration:underline; }
-    .pill { font-size:11px; padding:3px 9px; border-radius:999px; font-weight:600; display:inline-block; }
-    .s-completed{ background:#0e2620; color:var(--green); }
-    .s-working,.s-queued{ background:#10203f; color:var(--accent); }
-    .s-failed,.s-expired{ background:#2a1212; color:var(--red); }
-    .s-blocked{ background:#241d0c; color:var(--amber); }
+    .pr-link { display:inline-flex; align-items:center; gap:5px; font-weight:600;
+      color:var(--green-emphasis); }
+    .pr-link::before { content:""; width:8px; height:8px; border-radius:50%;
+      background:var(--green-emphasis); display:inline-block; }
+    .pill { font-size:11px; padding:3px 9px; border-radius:999px; font-weight:600;
+      display:inline-block; line-height:1.4; white-space:nowrap; }
+    .s-pr_open  { background:var(--green-emphasis); color:#fff; }
+    .s-completed{ background:var(--green-soft); color:var(--green-emphasis); border:1px solid #1f883d33; }
+    .s-working,.s-queued{ background:var(--accent-soft); color:var(--accent); border:1px solid #0969da33; }
+    .s-failed,.s-expired{ background:var(--red-soft); color:var(--red); border:1px solid #cf222e33; }
+    .s-blocked{ background:var(--amber-soft); color:var(--amber); border:1px solid #9a670033; }
+    .scanbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      background:var(--canvas); border:1px solid var(--border); border-radius:12px;
+      padding:11px 16px; margin-bottom:24px; box-shadow:var(--shadow); font-size:13px; }
+    .scanbar .icon { font-size:15px; }
+    .scanbar b { font-weight:600; }
+    .scanbar .sep { color:var(--border); }
+    .scanbar .muted { color:var(--muted); }
+    .scanbar .off { color:var(--amber); font-weight:600; }
     .src { font-size:11px; color:var(--muted); }
-    .empty { color:var(--muted); padding:30px; text-align:center; }
-    .dot { height:7px; width:7px; border-radius:50%; display:inline-block; margin-right:6px;
-      background:var(--green); box-shadow:0 0 0 0 rgba(54,211,153,.6); animation:p 2s infinite; }
-    @keyframes p { 0%{box-shadow:0 0 0 0 rgba(54,211,153,.5);} 70%{box-shadow:0 0 0 7px rgba(54,211,153,0);} }
+    .summary { font-size:12px; color:var(--muted); margin-top:3px; }
+    .sev-critical{ color:var(--red); font-weight:600; } .sev-high{ color:var(--amber); font-weight:600; }
+    .empty { color:var(--muted); padding:34px; text-align:center; }
+    .dot { height:8px; width:8px; border-radius:50%; display:inline-block; margin-right:6px;
+      background:var(--green-emphasis); box-shadow:0 0 0 0 rgba(31,136,61,.5); animation:p 2s infinite; }
+    @keyframes p { 0%{box-shadow:0 0 0 0 rgba(31,136,61,.45);} 70%{box-shadow:0 0 0 7px rgba(31,136,61,0);} }
   </style>
 </head>
 <body>
+  {% set STATUS_LABELS = {
+    'queued':'queued', 'working':'working', 'pr_open':'PR ready',
+    'completed':'completed', 'blocked':'needs input', 'failed':'failed', 'expired':'expired'
+  } %}
   <div class="wrap">
     <header>
       <div>
-        <h1><span>Devin</span> · Superset Auto-Remediation Pipeline</h1>
+        <h1><span>Devin</span> · Security Auto-Remediation</h1>
         <div class="sub"><span class="dot"></span>Live · repo <code>{{ repo }}</code> · auto-refresh 10s</div>
       </div>
       {% if configured %}
@@ -67,50 +104,68 @@
     </header>
 
     <div class="grid">
-      <div class="kpi"><div class="label">Total Issues</div>
+      <div class="kpi"><div class="label">Vulnerabilities</div>
         <div class="value blue">{{ metrics.total }}</div>
-        <div class="foot">ingested by the pipeline</div></div>
-      <div class="kpi"><div class="label">Active</div>
+        <div class="foot">detected by the pipeline</div></div>
+      <div class="kpi"><div class="label">In Progress</div>
         <div class="value amber">{{ metrics.active }}</div>
         <div class="foot">Devin working now</div></div>
-      <div class="kpi"><div class="label">PRs Opened</div>
-        <div class="value green">{{ metrics.prs_opened }}</div>
-        <div class="foot">ready for review</div></div>
+      <div class="kpi"><div class="label">PRs Awaiting Review</div>
+        <div class="value green">{{ metrics.awaiting_review }}</div>
+        <div class="foot">ready for a human ✓</div></div>
       <div class="kpi"><div class="label">Success Rate</div>
         <div class="value green">{{ metrics.success_rate if metrics.success_rate is not none else '—' }}{% if metrics.success_rate is not none %}%{% endif %}</div>
-        <div class="foot">{{ metrics.completed }} fixed / {{ metrics.failed }} failed</div></div>
+        <div class="foot">{{ metrics.succeeded }} fixed / {{ metrics.failed }} failed</div></div>
       <div class="kpi"><div class="label">Avg Cycle</div>
         <div class="value purple">{{ metrics.avg_minutes if metrics.avg_minutes is not none else '—' }}{% if metrics.avg_minutes is not none %}m{% endif %}</div>
-        <div class="foot">issue → PR</div></div>
+        <div class="foot">detected → PR (MTTR)</div></div>
       <div class="kpi"><div class="label">Eng-Hours Saved</div>
         <div class="value green">{{ metrics.eng_hours_saved }}</div>
         <div class="foot">~2.5h/issue baseline</div></div>
     </div>
 
-    <table>
-      <thead><tr>
-        <th>#</th><th>Issue</th><th>Source</th><th>Sev</th>
-        <th>Status</th><th>PR</th><th>Devin</th><th>ACU</th>
-      </tr></thead>
-      <tbody>
-      {% for s in sessions %}
-        <tr>
-          <td>{{ s.issue_number }}</td>
-          <td>{{ s.issue_title[:62] }}{% if s.issue_title|length > 62 %}…{% endif %}
-            {% if s.summary %}<div class="src">{{ s.summary[:90] }}</div>{% endif %}</td>
-          <td><span class="src">{{ s.source }}</span></td>
-          <td><span class="src">{{ s.severity or '—' }}</span></td>
-          <td><span class="pill s-{{ s.status }}">{{ s.status }}</span></td>
-          <td>{% if s.pr_url %}<a href="{{ s.pr_url }}" target="_blank">view PR ↗</a>{% else %}—{% endif %}</td>
-          <td>{% if s.devin_session_url %}<a href="{{ s.devin_session_url }}" target="_blank">session ↗</a>{% else %}—{% endif %}</td>
-          <td><span class="src">{{ '%.1f'|format(s.acu_used) if s.acu_used else '—' }}</span></td>
-        </tr>
+    <div class="scanbar">
+      <span class="icon">🛡️</span>
+      {% if scan.enabled %}
+        <span>Last scan: <b>{% if scan.last %}{{ scan.last }}{% else %}not yet this session{% endif %}</b>
+          {%- if scan.last and scan.findings is not none %} <span class="muted">({{ scan.findings }} vuln{{ '' if scan.findings == 1 else 's' }} found, {{ scan.filed }} filed)</span>{% endif %}</span>
+        <span class="sep">•</span>
+        <span>Next scan: <b>{{ scan.next or '—' }}</b></span>
+        <span class="sep">•</span>
+        <span class="muted">runs every {{ scan.interval }}</span>
       {% else %}
-        <tr><td colspan="8" class="empty">No remediations yet. Trigger one with
-          <code>POST /scan</code> or <code>POST /remediate/&lt;issue&gt;</code>.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+        <span class="off">Scheduled scanning disabled</span>
+        <span class="muted">— set <code>SCANNER_INTERVAL_SECONDS</code> &gt; 0, or trigger manually with <code>POST /scan</code></span>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head">Remediations</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Vulnerability</th><th>Source</th><th>Sev</th>
+          <th>Status</th><th>Pull Request</th><th>Devin</th><th>ACU</th>
+        </tr></thead>
+        <tbody>
+        {% for s in sessions %}
+          <tr>
+            <td>{{ s.issue_number }}</td>
+            <td>{{ s.issue_title[:62] }}{% if s.issue_title|length > 62 %}…{% endif %}
+              {% if s.summary %}<div class="summary">{{ s.summary[:96] }}</div>{% endif %}</td>
+            <td><span class="src">{{ s.source }}</span></td>
+            <td><span class="src sev-{{ (s.severity or '')|lower }}">{{ s.severity or '—' }}</span></td>
+            <td><span class="pill s-{{ s.status }}">{{ STATUS_LABELS.get(s.status, s.status) }}</span></td>
+            <td>{% if s.pr_url %}<a class="pr-link" href="{{ s.pr_url }}" target="_blank">view PR ↗</a>{% else %}<span class="src">—</span>{% endif %}</td>
+            <td>{% if s.devin_session_url %}<a href="{{ s.devin_session_url }}" target="_blank">session ↗</a>{% else %}<span class="src">—</span>{% endif %}</td>
+            <td><span class="src">{{ '%.1f'|format(s.acu_used) if s.acu_used else '—' }}</span></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="empty">No remediations yet. Trigger one with
+            <code>POST /scan</code> or <code>POST /remediate/&lt;issue&gt;</code>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </body>
 </html>

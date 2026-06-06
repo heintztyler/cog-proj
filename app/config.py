@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     def configured(self) -> bool:
         """True once real credentials have been supplied."""
         return (
-            self.devin_api_key.startswith("apk_")
+            self.devin_api_key.startswith(("apk_", "cog_"))
             and not self.github_token.startswith("ghp_replace")
             and "/" in self.github_repo
             and not self.github_repo.startswith("your-org")

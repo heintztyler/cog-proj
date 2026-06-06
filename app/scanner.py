@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from dataclasses import dataclass
 
 import httpx
@@ -127,6 +128,8 @@ class Scanner:
         self.github = github
         self.orchestrator = orchestrator
         self._seen: set[str] = set()  # fingerprints filed this process
+        self.last_run_at: float | None = None   # epoch of the last completed scan
+        self.last_result: dict | None = None     # summary of the last scan
 
     async def scan(self) -> list[Finding]:
         """Inspect configured requirements files and return findings."""
@@ -189,5 +192,7 @@ class Scanner:
                     dispatched += 1
 
         result = {"findings": len(findings), "issues_filed": filed, "dispatched": dispatched}
+        self.last_run_at = time.time()
+        self.last_result = result
         log.info("scan complete: %s", result)
         return result

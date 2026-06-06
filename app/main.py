@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -135,6 +136,46 @@ _TEMPLATE = Template(
 )
 
 
+def _humanize(seconds: float) -> str:
+    """A compact 'ago'/'in' magnitude like 5s, 12m, 1h 3m, 2d 4h."""
+    s = int(abs(seconds))
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m"
+    if s < 86400:
+        h, m = s // 3600, (s % 3600) // 60
+        return f"{h}h {m}m" if m else f"{h}h"
+    d, h = s // 86400, (s % 86400) // 3600
+    return f"{d}d {h}h" if h else f"{d}d"
+
+
+def _scan_status() -> dict:
+    """When the scanner last ran and when it runs next, for the dashboard."""
+    now = time.time()
+    scanner = state["scanner"]
+    enabled = settings.scanner_interval_seconds > 0
+
+    last = scanner.last_run_at
+    last_str = f"{_humanize(now - last)} ago" if last else None
+    last_result = scanner.last_result
+
+    next_str = None
+    if enabled:
+        job = state["scheduler"].get_job("scanner")
+        if job and job.next_run_time:
+            next_str = f"in {_humanize(job.next_run_time.timestamp() - now)}"
+
+    return {
+        "enabled": enabled,
+        "last": last_str,
+        "next": next_str,
+        "interval": _humanize(settings.scanner_interval_seconds) if enabled else None,
+        "findings": last_result.get("findings") if last_result else None,
+        "filed": last_result.get("issues_filed") if last_result else None,
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     store: Store = state["store"]
@@ -143,4 +184,5 @@ async def dashboard():
         sessions=store.list_all(limit=100),
         repo=settings.github_repo,
         configured=settings.configured,
+        scan=_scan_status(),
     )

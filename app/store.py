@@ -13,8 +13,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
-# Lifecycle of a remediation, mirrored from Devin's session status_enum.
-TERMINAL_STATES = {"completed", "failed", "blocked", "expired"}
+# Terminal lifecycle states. `pr_open` = Devin opened a PR and it's awaiting
+# human review (a success outcome); `completed` = Devin reported itself finished.
+# `blocked` is intentionally NOT terminal: a session blocked on (e.g.) missing
+# push access can still resolve to a PR once a human unblocks it, so we keep
+# polling it.
+TERMINAL_STATES = {"pr_open", "completed", "failed", "expired"}
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS remediations (
@@ -26,7 +30,7 @@ CREATE TABLE IF NOT EXISTS remediations (
     severity          TEXT,                     -- low | medium | high | critical
     devin_session_id  TEXT,
     devin_session_url TEXT,
-    status            TEXT NOT NULL,            -- queued|working|completed|failed|blocked|expired
+    status            TEXT NOT NULL,            -- queued|working|pr_open|completed|failed|blocked|expired
     pr_url            TEXT,
     acu_used          REAL,
     summary           TEXT,
@@ -98,10 +102,11 @@ class Store:
             return dict(row) if row else None
 
     def in_flight(self) -> list[dict]:
-        """Rows that still need polling."""
+        """Rows that still need polling. Includes `blocked`: a blocked session
+        can still reach a PR once a human unblocks it (e.g. grants push access)."""
         with self._conn() as c:
             rows = c.execute(
-                "SELECT * FROM remediations WHERE status IN ('queued','working') "
+                "SELECT * FROM remediations WHERE status IN ('queued','working','blocked') "
                 "AND devin_session_id IS NOT NULL"
             ).fetchall()
             return [dict(r) for r in rows]
@@ -131,15 +136,20 @@ class Store:
                 durations.append(r["completed_at"] - r["created_at"])
 
         completed = by_status.get("completed", 0)
+        awaiting_review = by_status.get("pr_open", 0)
+        # Both a finished session and a PR-up-awaiting-review are successes.
+        succeeded = completed + awaiting_review
         failed = by_status.get("failed", 0) + by_status.get("expired", 0)
-        resolved = completed + failed
-        success_rate = round(100 * completed / resolved, 1) if resolved else None
+        resolved = succeeded + failed
+        success_rate = round(100 * succeeded / resolved, 1) if resolved else None
 
         return {
             "total": total,
             "by_status": by_status,
             "active": by_status.get("working", 0) + by_status.get("queued", 0),
             "completed": completed,
+            "awaiting_review": awaiting_review,
+            "succeeded": succeeded,
             "failed": failed,
             "blocked": by_status.get("blocked", 0),
             "prs_opened": prs,
@@ -147,6 +157,6 @@ class Store:
             "avg_minutes": round(sum(durations) / len(durations) / 60, 1) if durations else None,
             "total_acus": round(sum(acus), 2) if acus else 0,
             # Rough engineering-hours saved: ~2.5h/issue of senior time, a
-            # conservative figure for triage+fix+PR on a vuln/quality issue.
-            "eng_hours_saved": round(completed * 2.5, 1),
+            # conservative figure for triage+fix+PR on a security issue.
+            "eng_hours_saved": round(succeeded * 2.5, 1),
         }

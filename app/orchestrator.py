@@ -114,13 +114,39 @@ class Orchestrator:
                 f"Needs a human look: {row['devin_session_url']}",
             )
         elif norm["status"] == "blocked":
-            # Devin is waiting on input — flag for a human, keep the row alive.
-            self.store.update(rid, status="blocked", acu_used=norm["acu_used"])
-            log.warning("remediation #%s blocked — needs human input", rid)
+            if norm["pr_url"]:
+                # Devin opened a PR and parked for human review. That's the
+                # success outcome (awaiting review) — not a block. Capture the PR.
+                self.store.update(
+                    rid, status="pr_open", pr_url=norm["pr_url"],
+                    summary=norm["summary"], acu_used=norm["acu_used"],
+                )
+                await self._report_success(row, norm)
+            else:
+                # Blocked with no PR yet — genuinely needs human input. Capture
+                # Devin's stated reason so the dashboard/issue explain the block.
+                reason = norm.get("summary") or "Devin needs human input to continue."
+                first_time = row.get("status") != "blocked"
+                self.store.update(
+                    rid, status="blocked", acu_used=norm["acu_used"], summary=reason,
+                )
+                log.warning("remediation #%s blocked — %s", rid, reason)
+                if first_time:  # comment once, on the transition into blocked
+                    await self._safe_comment(
+                        row["issue_number"],
+                        f"⏸️ **Devin is blocked and needs a human.**\n\n> {reason}\n\n"
+                        f"Session: {row['devin_session_url']}",
+                    )
         else:
-            # still working; just refresh ACU usage so the dashboard ticks.
+            # Still working; refresh ACU usage and surface the PR link as soon as
+            # Devin opens one, even before the session reaches a terminal state.
+            fields: dict = {}
             if norm["acu_used"] is not None:
-                self.store.update(rid, acu_used=norm["acu_used"])
+                fields["acu_used"] = norm["acu_used"]
+            if norm["pr_url"] and not row.get("pr_url"):
+                fields["pr_url"] = norm["pr_url"]
+            if fields:
+                self.store.update(rid, **fields)
 
     async def _report_success(self, row: dict, norm: dict) -> None:
         pr = norm["pr_url"]
