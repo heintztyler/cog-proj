@@ -2,6 +2,8 @@
 
 Autonomously detects security vulnerabilities in a GitHub repo and uses [Devin](https://devin.ai) to open pull requests that fix them. The dashboard at `http://localhost:8000` shows everything live.
 
+> **Scanner:** vulnerabilities are detected with [OSV.dev](https://osv.dev), Google's open-source vulnerability database. The pipeline reads your repo's pinned Python dependencies (`requirements/*.txt`) and queries OSV for known advisories (CVE/GHSA) against each one.
+
 ## What you need
 
 - **Git** and **Python 3.12+** — or just **Docker**.
@@ -24,8 +26,8 @@ Open `.env` and fill in three values:
 
 ```ini
 DEVIN_API_KEY=...                 # your Devin API key
-GITHUB_TOKEN=...                  # GitHub PAT with repo access to your fork
-GITHUB_REPO=your-username/your-fork
+GITHUB_TOKEN=...                  # GitHub PAT with repo access
+GITHUB_REPO=your-username/your-repo
 ```
 
 ## 3. Run
@@ -46,7 +48,7 @@ python3 -m venv .venv
 
 Then open **http://localhost:8000**.
 
-To kick off a scan immediately (instead of waiting for the schedule):
+To kick off a scan immediately (instead of waiting for the 1x hour schedule):
 
 ```bash
 curl -X POST http://localhost:8000/scan
