@@ -6,6 +6,11 @@ Vulnerabilities are detected with [OSV.dev](https://osv.dev), Google's open-sour
 
 The dashboard at `http://localhost:8000` shows what Devin is working on live, along with performance and system health metrics.
 
+**Development Process**
+
+- I used Claude Code heavily throughout the development process. It was specifically helpful for Github and Devin API integrations and frontend setup.
+- My general process was to use CC to generate a first version, then iterate with small tweaks manually or with follow-up prompts.
+
 ## What you need
 
 - **Git** and **Python 3.12+** — or just **Docker**.
@@ -55,8 +60,3 @@ To kick off a scan immediately (instead of waiting for the 1x hour schedule):
 ```bash
 curl -X POST http://localhost:8000/scan
 ```
-
-**Development Process**
-
-- I used Claude Code heavily throughout the development process. It was specifically helpful for Github and Devin API integrations and frontend setup.
-- My general process was to use CC to generate a first version, then iterate with small tweaks manually or with follow-up prompts.
