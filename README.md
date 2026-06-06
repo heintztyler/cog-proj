@@ -1,8 +1,10 @@
 # Security Auto-Remediation Pipeline
 
-Autonomously detects security vulnerabilities in a GitHub repo and uses [Devin](https://devin.ai) to open pull requests that fix them. The dashboard at `http://localhost:8000` shows everything live.
+Autonomously detects security vulnerabilities in a GitHub repo and uses [Devin](https://devin.ai) to open pull requests that fix them.
 
-> **Scanner:** vulnerabilities are detected with [OSV.dev](https://osv.dev), Google's open-source vulnerability database. The pipeline reads your repo's pinned Python dependencies (`requirements/*.txt`) and queries OSV for known advisories (CVE/GHSA) against each one.
+Vulnerabilities are detected with [OSV.dev](https://osv.dev), Google's open-source vulnerability database. The pipeline reads your repo's pinned Python dependencies (`requirements/*.txt`) and queries OSV for known advisories (CVE/GHSA) against each one, then creates Github issues for each at-risk dependency. Devin then processes these issues and creates PR to resolve them.
+
+The dashboard at `http://localhost:8000` shows what Devin is working on live, along with performance and system health metrics.
 
 ## What you need
 
