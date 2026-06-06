@@ -34,18 +34,18 @@ GITHUB_REPO=your-username/your-repo
 
 ## 3. Run
 
-**With Docker (simplest):**
-
-```bash
-docker compose up --build
-```
-
-**Or with Python:**
+**With Python:**
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/uvicorn app.main:app
+```
+
+**Or with Docker (simplest):**
+
+```bash
+docker compose up --build
 ```
 
 Then open **http://localhost:8000**.
