@@ -57,6 +57,27 @@ class GitHubClient:
         )
         resp.raise_for_status()
 
+    async def close_issue(self, issue_number: int) -> None:
+        resp = await self._client.patch(
+            f"/repos/{self.repo}/issues/{issue_number}", json={"state": "closed"}
+        )
+        resp.raise_for_status()
+
+    async def delete_issue(self, node_id: str) -> None:
+        """Permanently delete an issue via GraphQL. Irreversible; the token must
+        belong to a user with admin/maintain rights on the repo."""
+        query = (
+            "mutation($id: ID!) { deleteIssue(input: {issueId: $id}) "
+            "{ clientMutationId } }"
+        )
+        resp = await self._client.post(
+            "/graphql", json={"query": query, "variables": {"id": node_id}}
+        )
+        resp.raise_for_status()
+        errors = resp.json().get("errors")
+        if errors:
+            raise RuntimeError(f"deleteIssue failed: {errors}")
+
     async def add_labels(self, issue_number: int, labels: list[str]) -> None:
         resp = await self._client.post(
             f"/repos/{self.repo}/issues/{issue_number}/labels", json={"labels": labels}

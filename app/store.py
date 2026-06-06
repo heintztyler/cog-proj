@@ -95,6 +95,14 @@ class Store:
         with self._conn() as c:
             c.execute(f"UPDATE remediations SET {cols} WHERE id=?", (*fields.values(), rid))
 
+    def clear(self) -> int:
+        """Delete all remediation rows (keeps the schema). Returns the count
+        removed — safe to call while the server is running."""
+        with self._conn() as c:
+            n = c.execute("SELECT COUNT(*) FROM remediations").fetchone()[0]
+            c.execute("DELETE FROM remediations")
+            return n
+
     # ---- reads ------------------------------------------------------------
     def get(self, rid: int) -> Optional[dict]:
         with self._conn() as c:
