@@ -55,3 +55,6 @@ To kick off a scan immediately (instead of waiting for the 1x hour schedule):
 ```bash
 curl -X POST http://localhost:8000/scan
 ```
+
+**Development Process**
+I used Claude Code heavily throughout the development process. It was specifically helpful for Github and Devin API integrations and frontend setup. My general process was to use CC to generate a first version, then iterate with small tweaks manually or with follow-up prompts.
